@@ -25,7 +25,6 @@
 Математически доказывается, что оба участника получают одинаковый результат: $K = g^{x_A \cdot x_B} \mod p$.
 
 ## Код решения
-
 ```kotlin
 import java.math.BigInteger
 import java.security.SecureRandom
@@ -70,12 +69,10 @@ fun randomBigInteger(min: BigInteger, max: BigInteger): BigInteger {
  * Проверка числа на простоту с помощью теста Миллера-Рабина
  */
 fun isPrime(n: BigInteger, rounds: Int = 40): Boolean {
-    // Проверка тривиальных случаев
     if (n < BigInteger.TWO) return false
     if (n == BigInteger.TWO || n == BigInteger.valueOf(3)) return true
     if (n.mod(BigInteger.TWO) == BigInteger.ZERO) return false
     
-    // Представление n-1 как d * 2^s
     var d = n.subtract(BigInteger.ONE)
     var s = 0
     while (d.mod(BigInteger.TWO) == BigInteger.ZERO) {
@@ -83,7 +80,6 @@ fun isPrime(n: BigInteger, rounds: Int = 40): Boolean {
         s++
     }
     
-    // Проверка нескольких случайных свидетелей простоты
     for (i in 0 until rounds) {
         val a = randomBigInteger(BigInteger.TWO, n.subtract(BigInteger.ONE))
         var x = powerMod(a, d, n)
@@ -146,7 +142,6 @@ fun factorize(n: BigInteger): MutableList<BigInteger> {
 
 /**
  * Поиск первообразного корня по модулю p
- * Используется факторизация φ(p) = p-1
  */
 fun findPrimitiveRoot(p: BigInteger): BigInteger {
     val phi = p.subtract(BigInteger.ONE)
@@ -156,7 +151,6 @@ fun findPrimitiveRoot(p: BigInteger): BigInteger {
     while (g < p) {
         var isRoot = true
         
-        // Проверка: g^(phi/qi) mod p != 1 для всех простых делителей qi
         for (factor in factors) {
             if (powerMod(g, phi.divide(factor), p) == BigInteger.ONE) {
                 isRoot = false
@@ -177,119 +171,69 @@ fun findPrimitiveRoot(p: BigInteger): BigInteger {
  * Класс, представляющий пользователя в протоколе Диффи-Хеллмана
  */
 class User(val name: String) {
-    var privateKey: BigInteger = BigInteger.ZERO   // Закрытый ключ
-    var publicKey: BigInteger = BigInteger.ZERO    // Открытый ключ
-    var sharedSecret: BigInteger = BigInteger.ZERO // Общий секрет
+    var privateKey: BigInteger = BigInteger.ZERO
+    var publicKey: BigInteger = BigInteger.ZERO
+    var sharedSecret: BigInteger = BigInteger.ZERO
     
     /**
-     * Генерация пары ключей (закрытого и открытого)
+     * Генерация собственной пары ключей
      */
     fun generateKeys(p: BigInteger, g: BigInteger) {
         // Генерация случайного секретного ключа в диапазоне (1, p-1)
         privateKey = randomBigInteger(BigInteger.ONE.add(BigInteger.ONE), p.subtract(BigInteger.ONE))
         
-        // Вычисление открытого ключа y = g^x mod p
+        // Вычисление открытого ключа
         publicKey = powerMod(g, privateKey, p)
         
-        println("[$name] Закрытый ключ x: $privateKey")
-        println("[$name] Открытый ключ y: $publicKey")
+        println("[$name] Секретный ключ: $privateKey")
+        println("[$name] Открытый ключ: $publicKey")
     }
     
     /**
      * Получение открытого ключа от другого пользователя и вычисление общего секрета
      */
     fun receivePublicKeyAndComputeSecret(otherPublicKey: BigInteger, p: BigInteger) {
-        println("[$name] Получен открытый ключ собеседника: $otherPublicKey")
-        // Вычисление общего секрета: K = (y_собеседника)^x mod p
+        println("[$name] Получен открытый ключ: $otherPublicKey")
         sharedSecret = powerMod(otherPublicKey, privateKey, p)
-        println("[$name] Вычислен общий секрет K: $sharedSecret")
+        println("[$name] Общий секрет: $sharedSecret")
     }
 }
 
 /**
- * Генерация общих параметров p и g для протокола
+ * Вспомогательная функция для повторения строки
  */
-fun generateSharedParameters(bits: Int = 256): Pair<BigInteger, BigInteger> {
-    val p = generateRandomPrime(bits)  // Генерация простого числа p
-    val g = findPrimitiveRoot(p)        // Поиск первообразного корня g
-    return Pair(p, g)
-}
-
-/**
- * Демонстрация протокола Диффи-Хеллмана с малыми числами
- */
-fun demonstrateWithSmallNumbers() {
-    println("=".repeat(70))
-    println("ДЕМОНСТРАЦИЯ ПРОТОКОЛА ДИФФИ-ХЕЛЛМАНА С МАЛЫМИ ЧИСЛАМИ")
-    println("=".repeat(70))
-    println()
-    
-    // Использование небольшого простого числа для наглядности
-    val p = BigInteger.valueOf(23)
-    val g = BigInteger.valueOf(5)
-    
-    println("Общие параметры:")
-    println("  p = $p (простое число)")
-    println("  g = $g (первообразный корень по модулю $p)")
-    println()
-    
-    // Секретные ключи участников (для демонстрации используются фиксированные значения)
-    val xAlice = BigInteger.valueOf(6)
-    val xBob = BigInteger.valueOf(15)
-    
-    println("Закрытые ключи:")
-    println("  xA = $xAlice (Алиса)")
-    println("  xB = $xBob (Боб)")
-    println()
-    
-    // Вычисление открытых ключей
-    val yAlice = powerMod(g, xAlice, p)
-    val yBob = powerMod(g, xBob, p)
-    
-    println("Открытые ключи:")
-    println("  yA = g^xA mod p = 5^$xAlice mod $p = $yAlice")
-    println("  yB = g^xB mod p = 5^$xBob mod $p = $yBob")
-    println()
-    
-    // Вычисление общего секрета
-    val secretAlice = powerMod(yBob, xAlice, p)
-    val secretBob = powerMod(yAlice, xBob, p)
-    
-    println("Вычисление общего секрета:")
-    println("  Алиса: K = yB^xA mod p = $yBob^$xAlice mod $p = $secretAlice")
-    println("  Боб: K = yA^xB mod p = $yAlice^$xBob mod $p = $secretBob")
-    println()
-    
-    if (secretAlice == secretBob) {
-        println("✓ УСПЕХ! Общий секретный ключ: $secretAlice")
-        println("  (математически: g^(xA·xB) mod p = 5^(6·15) mod 23 = 5^90 mod 23 = 2)")
+fun repeatString(str: String, count: Int): String {
+    val result = StringBuilder()
+    for (i in 0 until count) {
+        result.append(str)
     }
-    println()
+    return result.toString()
 }
 
 /**
- * Основная демонстрация работы протокола
+ * Имитация обмена данными между пользователями
  */
-fun demonstrateDiffieHellman() {
-    println("=".repeat(70))
-    println("РЕАЛИЗАЦИЯ ПРОТОКОЛА ДИФФИ-ХЕЛЛМАНА")
-    println("=".repeat(70))
+fun simulateExchange() {
+    println(repeatString("=", 70))
+    println("ИМИТАЦИЯ ОБМЕНА ДАННЫМИ МЕЖДУ ПОЛЬЗОВАТЕЛЯМИ")
+    println(repeatString("=", 70))
     println()
     
-    // ЭТАП 1: Генерация общих параметров
-    println("ЭТАП 1: Генерация общих параметров")
-    println("-".repeat(50))
+    // ЭТАП 1: Выбор общих параметров
+    println("ЭТАП 1: Выбор общих параметров")
+    println(repeatString("-", 50))
     
     val BIT_LENGTH = 64
-    val (p, g) = generateSharedParameters(BIT_LENGTH)
+    val p = generateRandomPrime(BIT_LENGTH)
+    val g = findPrimitiveRoot(p)
     
-    println("Сгенерировано общее простое число p: $p")
-    println("Найден первообразный корень g: $g")
+    println("Общее простое число p: $p")
+    println("Первообразный корень g: $g")
     println()
     
-    // ЭТАП 2: Генерация ключей участниками
+    // ЭТАП 2: Генерация ключей
     println("ЭТАП 2: Генерация ключей")
-    println("-".repeat(50))
+    println(repeatString("-", 50))
     
     val alice = User("Алиса")
     val bob = User("Боб")
@@ -303,28 +247,33 @@ fun demonstrateDiffieHellman() {
     println()
     
     // ЭТАП 3: Имитация обмена открытыми ключами
-    println("ЭТАП 3: Обмен открытыми ключами")
-    println("-".repeat(50))
+    println("ЭТАП 3: Имитация обмена открытыми ключами")
+    println(repeatString("-", 50))
     println("        НЕЗАЩИЩЁННЫЙ КАНАЛ СВЯЗИ")
-    println("   ┌─────────────┐          ┌─────────────┐")
-    println("   │   АЛИСА     │          │     БОБ     │")
-    println("   │  yA = ${alice.publicKey} │          │  yB = ${bob.publicKey} │")
-    println("   └──────┬──────┘          └──────┬──────┘")
-    println("          │                        │")
-    println("          │    1) yA → Боб         │")
-    println("          │───────────────────────>│")
-    println("          │                        │")
-    println("          │    2) yB → Алиса       │")
-    println("          │<───────────────────────│")
+    println("   +-------------+          +-------------+")
+    println("   |   АЛИСА     |          |     БОБ     |")
+    println("   |  yA = ${alice.publicKey} |          |  yB = ${bob.publicKey} |")
+    println("   +------+------+          +------+------+")
+    println("          |                        |")
+    println("          |    1) yA -> Боб         |")
+    println("          |----------------------->|")
+    println("          |                        |")
+    println("          |    2) yB -> Алиса       |")
+    println("          |<-----------------------|")
+    println("          |                        |")
     println()
     
-    println("Алиса отправляет Бобу открытый ключ: ${alice.publicKey}")
-    println("Боб отправляет Алисе открытый ключ: ${bob.publicKey}")
+    println("--- Отправка сообщения 1: Алиса -> Боб ---")
+    println("Алиса отправляет Бобу свой открытый ключ: ${alice.publicKey}")
+    println()
+    
+    println("--- Отправка сообщения 2: Боб -> Алиса ---")
+    println("Боб отправляет Алисе свой открытый ключ: ${bob.publicKey}")
     println()
     
     // ЭТАП 4: Вычисление общего секрета
     println("ЭТАП 4: Вычисление общего секрета")
-    println("-".repeat(50))
+    println(repeatString("-", 50))
     
     println("--- Вычисления Алисы ---")
     alice.receivePublicKeyAndComputeSecret(bob.publicKey, p)
@@ -334,77 +283,32 @@ fun demonstrateDiffieHellman() {
     bob.receivePublicKeyAndComputeSecret(alice.publicKey, p)
     println()
     
-    // ЭТАП 5: Проверка совпадения
-    println("ЭТАП 5: Проверка результата")
-    println("-".repeat(50))
+    // ЭТАП 5: Проверка
+    println("ЭТАП 5: Проверка совпадения")
+    println(repeatString("-", 50))
     
     if (alice.sharedSecret == bob.sharedSecret) {
-        println("✓ УСПЕХ! Общий секрет успешно согласован!")
-        println("  Общий секретный ключ K: ${alice.sharedSecret}")
-        println()
-        println("  Математическое подтверждение:")
-        println("  K_A = (yB)^xA mod p = g^(xB·xA) mod p")
-        println("  K_B = (yA)^xB mod p = g^(xA·xB) mod p")
-        println("  K_A = K_B = g^(xA·xB) mod p")
+        println("УСПЕХ! Общий секрет совпадает!")
+        println("Общий секретный ключ: ${alice.sharedSecret}")
     } else {
-        println("✗ ОШИБКА! Общие секреты не совпадают!")
+        println("ОШИБКА! Ключи не совпадают!")
     }
     
     println()
-    println("=".repeat(70))
+    println(repeatString("=", 70))
 }
 
 /**
- * Вспомогательная функция для повторения строки
- */
-fun String.repeat(count: Int): String {
-    val result = StringBuilder()
-    for (i in 0 until count) {
-        result.append(this)
-    }
-    return result.toString()
-}
-
-/**
- * Главная функция программы
+ * Главная функция
  */
 fun main() {
-    // Демонстрация с малыми числами для понимания алгоритма
-    demonstrateWithSmallNumbers()
-    
-    println()
-    
-    // Демонстрация реальной работы протокола
-    demonstrateDiffieHellman()
+    simulateExchange()
 }
 ```
 
 ## Пример вывода программы
 
 ```
-======================================================================
-ДЕМОНСТРАЦИЯ ПРОТОКОЛА ДИФФИ-ХЕЛЛМАНА С МАЛЫМИ ЧИСЛАМИ
-======================================================================
-
-Общие параметры:
-  p = 23 (простое число)
-  g = 5 (первообразный корень по модулю 23)
-
-Закрытые ключи:
-  xA = 6 (Алиса)
-  xB = 15 (Боб)
-
-Открытые ключи:
-  yA = g^xA mod p = 5^6 mod 23 = 8
-  yB = g^xB mod p = 5^15 mod 23 = 19
-
-Вычисление общего секрета:
-  Алиса: K = yB^xA mod p = 19^6 mod 23 = 2
-  Боб: K = yA^xB mod p = 8^15 mod 23 = 2
-
-✓ УСПЕХ! Общий секретный ключ: 2
-  (математически: g^(xA·xB) mod p = 5^(6·15) mod 23 = 5^90 mod 23 = 2)
-
 ======================================================================
 РЕАЛИЗАЦИЯ ПРОТОКОЛА ДИФФИ-ХЕЛЛМАНА
 ======================================================================

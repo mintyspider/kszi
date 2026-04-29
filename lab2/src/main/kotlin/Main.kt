@@ -183,53 +183,6 @@ fun repeatString(str: String, count: Int): String {
 }
 
 /**
- * Демонстрация с малыми числами
- */
-fun demonstrateWithSmallNumbers() {
-    println(repeatString("=", 70))
-    println("ДЕМОНСТРАЦИЯ С МАЛЫМИ ЧИСЛАМИ")
-    println(repeatString("=", 70))
-    println()
-    
-    val p = BigInteger.valueOf(23)
-    val g = BigInteger.valueOf(5)
-    
-    println("Общие параметры:")
-    println("  p = $p (простое число)")
-    println("  g = $g (первообразный корень по модулю $p)")
-    println()
-    
-    val xAlice = BigInteger.valueOf(6)
-    val xBob = BigInteger.valueOf(15)
-    
-    println("Секретные ключи:")
-    println("  xA = $xAlice (Алиса)")
-    println("  xB = $xBob (Боб)")
-    println()
-    
-    val yAlice = powerMod(g, xAlice, p)
-    val yBob = powerMod(g, xBob, p)
-    
-    println("Открытые ключи:")
-    println("  yA = g^xA mod p = 5^$xAlice mod $p = $yAlice")
-    println("  yB = g^xB mod p = 5^$xBob mod $p = $yBob")
-    println()
-    
-    val secretAlice = powerMod(yBob, xAlice, p)
-    val secretBob = powerMod(yAlice, xBob, p)
-    
-    println("Вычисление общего секрета:")
-    println("  Алиса: K = yB^xA mod p = $yBob^$xAlice mod $p = $secretAlice")
-    println("  Боб: K = yA^xB mod p = $yAlice^$xBob mod $p = $secretBob")
-    println()
-    
-    if (secretAlice == secretBob) {
-        println("УСПЕХ! Общий секретный ключ: $secretAlice")
-    }
-    println()
-}
-
-/**
  * Имитация обмена данными между пользователями
  */
 fun simulateExchange() {
@@ -321,7 +274,5 @@ fun simulateExchange() {
  * Главная функция
  */
 fun main() {
-    demonstrateWithSmallNumbers()
-    println()
     simulateExchange()
 }
